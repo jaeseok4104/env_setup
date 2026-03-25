@@ -1,0 +1,13 @@
+# Sensitive data
+antigravity-accounts.json
+antigravity-signature-cache.json
+auth.json
+
+# Runtime
+node_modules/
+*.tmp
+*.bak
+
+# OS
+.DS_Store
+Thumbs.db
