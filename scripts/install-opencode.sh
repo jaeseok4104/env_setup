@@ -56,17 +56,30 @@ install_opencode() {
         log_info "Re-installing to ensure version v${version}..."
     fi
 
-    # Download and extract
-    local download_url="https://github.com/${OPENCODE_REPO}/releases/download/v${version}/opencode-${platform}.zip"
-    local tmp_dir
-    tmp_dir="$(mktemp -d)"
-    trap 'rm -rf "$tmp_dir"' EXIT
+    # Determine archive format: Linux uses .tar.gz, macOS uses .zip
+    local os_part="${platform%%-*}"
+    local archive_ext archive_name
+    if [[ "$os_part" == "linux" ]]; then
+        archive_ext="tar.gz"
+    else
+        archive_ext="zip"
+    fi
+    archive_name="opencode-${platform}.${archive_ext}"
 
-    log_info "Downloading opencode-${platform}.zip..."
-    curl -fsSL "$download_url" -o "${tmp_dir}/opencode.zip"
+    local download_url="https://github.com/${OPENCODE_REPO}/releases/download/v${version}/${archive_name}"
+    local tmp_dir=""
+    tmp_dir="$(mktemp -d)"
+    trap 'rm -rf "${tmp_dir:-}"' EXIT
+
+    log_info "Downloading ${archive_name}..."
+    curl -fsSL "$download_url" -o "${tmp_dir}/${archive_name}"
 
     log_info "Extracting..."
-    unzip -qo "${tmp_dir}/opencode.zip" -d "$tmp_dir"
+    if [[ "$archive_ext" == "tar.gz" ]]; then
+        tar -xzf "${tmp_dir}/${archive_name}" -C "$tmp_dir"
+    else
+        unzip -qo "${tmp_dir}/${archive_name}" -d "$tmp_dir"
+    fi
 
     # Install binary
     mkdir -p "$OPENCODE_BIN_DIR"
@@ -75,8 +88,8 @@ install_opencode() {
     local extracted_bin
     extracted_bin=$(find "$tmp_dir" -name "opencode" -type f -executable 2>/dev/null | head -1)
     if [[ -z "$extracted_bin" ]]; then
-        # Try without executable flag (might not be set in zip)
-        extracted_bin=$(find "$tmp_dir" -name "opencode" -type f ! -name "*.zip" 2>/dev/null | head -1)
+        # Try without executable flag (might not be set in archive)
+        extracted_bin=$(find "$tmp_dir" -name "opencode" -type f ! -name "*.tar.gz" ! -name "*.zip" 2>/dev/null | head -1)
     fi
 
     if [[ -z "$extracted_bin" ]]; then
@@ -84,6 +97,7 @@ install_opencode() {
         exit 1
     fi
 
+    rm -f "$OPENCODE_BIN"
     cp "$extracted_bin" "$OPENCODE_BIN"
     chmod +x "$OPENCODE_BIN"
 
