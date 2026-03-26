@@ -34,6 +34,31 @@ setup_config_dir() {
     fi
 }
 
+set_default_terminal() {
+    local ghostty_bin="/snap/bin/ghostty"
+
+    if [[ ! -x "$ghostty_bin" ]]; then
+        log_warn "Ghostty binary not found at $ghostty_bin — skipping default terminal setup"
+        return 0
+    fi
+
+    local current
+    current=$(update-alternatives --query x-terminal-emulator 2>/dev/null | grep "^Value:" | awk '{print $2}' || echo "")
+
+    if [[ "$current" == "$ghostty_bin" ]]; then
+        log_info "Ghostty is already the default terminal"
+        return 0
+    fi
+
+    log_info "Registering Ghostty in update-alternatives..."
+    sudo update-alternatives --install /usr/bin/x-terminal-emulator x-terminal-emulator "$ghostty_bin" 60
+
+    log_info "Setting Ghostty as the default terminal..."
+    sudo update-alternatives --set x-terminal-emulator "$ghostty_bin"
+
+    log_success "Ghostty is now the default terminal emulator"
+}
+
 main() {
     log_header "Installing Ghostty"
 
@@ -41,6 +66,7 @@ main() {
 
     install_ghostty
     setup_config_dir
+    set_default_terminal
 
     log_success "Ghostty installation complete"
 }
