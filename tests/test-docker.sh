@@ -37,10 +37,6 @@ else
     _inc TESTS_FAILED
 fi
 
-assert_file_exists /etc/docker/daemon.json "docker daemon.json exists"
-assert_json_valid /etc/docker/daemon.json "docker daemon.json is valid JSON"
-assert_json_has_key /etc/docker/daemon.json ".runtimes.nvidia" "daemon.json has NVIDIA runtime configured"
-
 assert_file_exists "${REPO_ROOT}/configs/docker-daemon.json" "docker-daemon.json config template exists"
 assert_json_valid "${REPO_ROOT}/configs/docker-daemon.json" "docker-daemon.json template is valid JSON"
 

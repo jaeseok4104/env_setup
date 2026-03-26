@@ -14,6 +14,7 @@ SKIP_OPENCODE=false
 SKIP_OMO=false
 SKIP_GHOSTTY=false
 SKIP_DOCKER=false
+SKIP_NVIDIA_DOCKER=false
 SKIP_SHELL=false
 
 usage() {
@@ -30,6 +31,7 @@ Options:
     --skip-omo          Skip OMO installation
     --skip-ghostty      Skip Ghostty installation
     --skip-docker       Skip Docker installation
+    --skip-nvidia-docker Skip NVIDIA Container Toolkit installation
     --skip-shell        Skip shell configuration
     -h, --help          Show this help message
 EOF
@@ -45,6 +47,7 @@ parse_args() {
             --skip-omo)     SKIP_OMO=true ;;
             --skip-ghostty) SKIP_GHOSTTY=true ;;
             --skip-docker)  SKIP_DOCKER=true ;;
+            --skip-nvidia-docker) SKIP_NVIDIA_DOCKER=true ;;
             --skip-shell)   SKIP_SHELL=true ;;
             -h|--help)      usage; exit 0 ;;
             *)              log_error "Unknown option: $1"; usage; exit 1 ;;
@@ -122,6 +125,14 @@ main() {
         steps_run=$((steps_run + 1))
     else
         log_info "[SKIP] Docker"
+        steps_skipped=$((steps_skipped + 1))
+    fi
+
+    if [[ "$SKIP_NVIDIA_DOCKER" == "false" ]]; then
+        run_step "NVIDIA Docker" "${SCRIPTS_DIR}/install-nvidia-docker.sh"
+        steps_run=$((steps_run + 1))
+    else
+        log_info "[SKIP] NVIDIA Docker"
         steps_skipped=$((steps_skipped + 1))
     fi
 

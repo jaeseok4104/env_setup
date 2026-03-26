@@ -5,9 +5,6 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${SCRIPT_DIR}/_common.sh"
 
-REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
-CONFIGS_DIR="${REPO_ROOT}/configs"
-
 DOCKER_PACKAGES=(
     docker-ce
     docker-ce-cli
@@ -111,39 +108,6 @@ setup_docker_group() {
     log_warn "You may need to log out and back in for group changes to take effect"
 }
 
-configure_daemon() {
-    local daemon_config="/etc/docker/daemon.json"
-    local source_config="${CONFIGS_DIR}/docker-daemon.json"
-
-    if [[ ! -f "$source_config" ]]; then
-        log_warn "No daemon config found at $source_config — skipping"
-        return 0
-    fi
-
-    if [[ -f "$daemon_config" ]]; then
-        # Compare existing config with our template
-        if diff -q "$daemon_config" "$source_config" &>/dev/null; then
-            log_info "Docker daemon config already matches: $daemon_config"
-            return 0
-        fi
-
-        log_info "Docker daemon config exists but differs — updating..."
-        sudo cp "$daemon_config" "${daemon_config}.bak"
-        log_info "  Backup saved: ${daemon_config}.bak"
-    fi
-
-    log_info "Deploying Docker daemon config..."
-    sudo cp "$source_config" "$daemon_config"
-    log_success "Docker daemon config deployed: $daemon_config"
-
-    # Restart Docker if it's running to pick up the new config
-    if systemctl is-active --quiet docker; then
-        log_info "Restarting Docker to apply daemon config..."
-        sudo systemctl restart docker
-        log_success "Docker restarted"
-    fi
-}
-
 enable_docker_service() {
     if systemctl is-enabled --quiet docker 2>/dev/null; then
         log_info "Docker service is already enabled"
@@ -189,7 +153,6 @@ main() {
     setup_docker_apt_repo
     install_docker_packages
     setup_docker_group
-    configure_daemon
     enable_docker_service
     verify_installation
 
