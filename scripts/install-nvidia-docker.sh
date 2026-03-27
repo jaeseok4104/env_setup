@@ -79,6 +79,7 @@ configure_docker_nvidia_runtime() {
 
     local daemon_config="/etc/docker/daemon.json"
     local needs_configure=false
+    local needs_restart=false
 
     if [[ ! -f "$daemon_config" ]]; then
         needs_configure=true
@@ -90,15 +91,41 @@ configure_docker_nvidia_runtime() {
         log_info "Configuring Docker NVIDIA runtime via nvidia-ctk..."
         sudo nvidia-ctk runtime configure --runtime=docker
         log_success "Docker NVIDIA runtime configured"
-
-        if systemctl is-active --quiet docker; then
-            log_info "Restarting Docker to apply NVIDIA runtime..."
-            sudo systemctl restart docker
-            log_success "Docker restarted"
-        fi
+        needs_restart=true
     else
         log_info "Docker NVIDIA runtime already configured in $daemon_config"
     fi
+
+    # Set nvidia as default runtime to avoid CDI scan issues on hybrid GPU systems
+    # (e.g. AMD iGPU + NVIDIA dGPU where --gpus flag triggers "AMD CDI spec not found")
+    if [[ -f "$daemon_config" ]] && ! jq -e '.["default-runtime"] == "nvidia"' "$daemon_config" &>/dev/null; then
+        log_info "Setting nvidia as default Docker runtime..."
+        local tmp_config
+        tmp_config=$(jq '. + {"default-runtime": "nvidia"}' "$daemon_config")
+        echo "$tmp_config" | sudo tee "$daemon_config" > /dev/null
+        log_success "Default runtime set to nvidia"
+        needs_restart=true
+    fi
+
+    if [[ "$needs_restart" == "true" ]] && systemctl is-active --quiet docker; then
+        log_info "Restarting Docker to apply runtime changes..."
+        sudo systemctl restart docker
+        log_success "Docker restarted"
+    fi
+}
+
+generate_cdi_spec() {
+    local cdi_spec="/etc/cdi/nvidia.yaml"
+
+    if [[ -f "$cdi_spec" ]]; then
+        log_info "CDI spec already exists: $cdi_spec"
+        return 0
+    fi
+
+    log_info "Generating NVIDIA CDI spec for --gpus flag support..."
+    sudo mkdir -p /etc/cdi
+    sudo nvidia-ctk cdi generate --output="$cdi_spec"
+    log_success "CDI spec generated: $cdi_spec"
 }
 
 verify_nvidia_docker() {
@@ -126,6 +153,7 @@ main() {
     setup_nvidia_apt_repo
     install_nvidia_packages
     configure_docker_nvidia_runtime
+    generate_cdi_spec
     verify_nvidia_docker
 
     log_success "NVIDIA Container Toolkit installation complete"

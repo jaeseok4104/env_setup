@@ -25,6 +25,8 @@ fi
 assert_file_exists /etc/docker/daemon.json "docker daemon.json exists"
 assert_json_has_key /etc/docker/daemon.json ".runtimes.nvidia" "daemon.json has NVIDIA runtime configured"
 
+assert_file_exists /etc/cdi/nvidia.yaml "CDI spec exists for --gpus flag support"
+
 _inc TESTS_TOTAL
 if docker info 2>/dev/null | grep -q "nvidia"; then
     echo -e "  ${GREEN}PASS${NC}: NVIDIA runtime visible in docker info"
