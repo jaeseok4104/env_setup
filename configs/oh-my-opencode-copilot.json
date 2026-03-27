@@ -4,7 +4,8 @@
   "agents": {
     "sisyphus": {
       "model": "github-copilot/gpt-5.4",
-      "variant": "high"
+      "variant": "high",
+      "prompt_append": "사용자에게 항상 한국어로 응답해주세요."
     },
     "hephaestus": {
       "model": "github-copilot/gpt-5.3-codex",
