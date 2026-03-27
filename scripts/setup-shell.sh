@@ -18,6 +18,13 @@ export PATH="$BUN_INSTALL/bin:$PATH"
 # opencode
 export PATH="$HOME/.opencode/bin:$PATH"
 
+# omo profile switching
+OMO_CONFIG_DIR="$HOME/.config/opencode"
+alias omo-spark="cp \"${OMO_CONFIG_DIR}/oh-my-opencode.spark.json\" \"${OMO_CONFIG_DIR}/oh-my-opencode.json\" && echo \"[OMO] spark mode activated\""
+alias omo-full="cp \"${OMO_CONFIG_DIR}/oh-my-opencode.full.json\" \"${OMO_CONFIG_DIR}/oh-my-opencode.json\" && echo \"[OMO] full (OpenAI direct) mode activated\""
+alias omo-debug="cp \"${OMO_CONFIG_DIR}/oh-my-opencode-copilot.json\" \"${OMO_CONFIG_DIR}/oh-my-opencode.json\" && echo \"[OMO] debug (copilot) mode activated\""
+alias omo-current="jq \".agents | to_entries[] | {agent: .key, model: .value.model, variant: .value.variant}\" \"${OMO_CONFIG_DIR}/oh-my-opencode.json\""
+
 # <<< env_setup managed <<<'
 
 detect_shell_rc() {

@@ -24,5 +24,9 @@ assert_file_exists "$RC_FILE" "shell rc file exists ($RC_FILE)"
 assert_file_contains "$RC_FILE" "$MARKER_BEGIN" "managed block present in rc file"
 assert_file_contains "$RC_FILE" 'BUN_INSTALL' "BUN_INSTALL export in rc file"
 assert_file_contains "$RC_FILE" '.opencode/bin' "opencode PATH in rc file"
+assert_file_contains "$RC_FILE" 'alias omo-spark=' "omo-spark alias in rc file"
+assert_file_contains "$RC_FILE" 'alias omo-full=' "omo-full alias in rc file"
+assert_file_contains "$RC_FILE" 'alias omo-debug=' "omo-debug alias in rc file"
+assert_file_contains "$RC_FILE" 'alias omo-current=' "omo-current alias in rc file"
 
 print_test_summary
